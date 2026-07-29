@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Copy — Apna AI Study Buddy</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #E9E4D6; }
+  .shell { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .card { width: 100%; max-width: 420px; background: #FBF8F0; border-radius: 2px; box-shadow: 0 8px 0 rgba(0,0,0,0.08), 0 10px 24px rgba(0,0,0,0.15); position: relative; overflow: hidden; }
+  .spiral { position: absolute; left: 0; top: 0; bottom: 0; width: 24px; background: rgba(0,0,0,0.02); border-right: 1px solid rgba(0,0,0,0.06); display: flex; flex-direction: column; justify-content: space-around; align-items: center; z-index: 2; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: #FBF8F0; border: 2px solid #C7BFA8; }
+  .margin { position: absolute; left: 48px; top: 0; bottom: 0; width: 2px; background: rgba(214,69,80,0.6); z-index: 1; }
+  .content { padding: 24px 20px 24px 56px; }
+  h1 { font-weight: 900; font-size: 22px; color: #1B2A4A; margin: 4px 0 4px; }
+  .sub { color: rgba(27,42,74,0.6); font-size: 13px; margin-bottom: 16px; }
+  .option { width: 100%; text-align: left; padding: 12px; background: none; border: none; border-bottom: 1px dashed #A9C6E8; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 15px; color: #1B2A4A; font-weight: 500; }
+  .option:hover { background: rgba(47,122,92,0.06); }
+  .num { color: #D64550; font-weight: 700; margin-right: 10px; }
+  .back { background: none; border: none; color: rgba(27,42,74,0.6); font-size: 13px; cursor: pointer; margin-bottom: 4px; }
+  .chatwrap { display: flex; flex-direction: column; height: 82vh; max-height: 640px; }
+  .chatheader { background: #1B2A4A; color: #FBF8F0; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+  .chatbody { flex: 1; overflow-y: auto; padding: 16px; background-image: repeating-linear-gradient(to bottom, transparent, transparent 31px, #A9C6E8 32px); }
+  .bubble { max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 14px; line-height: 1.5; margin-bottom: 10px; white-space: pre-wrap; }
+  .user { background: #1B2A4A; color: white; margin-left: auto; border-bottom-right-radius: 4px; }
+  .bot { background: rgba(244,211,94,0.25); border: 1px solid rgba(244,211,94,0.4); color: #1B2A4A; border-bottom-left-radius: 4px; }
+  .inputrow { border-top: 1px solid rgba(0,0,0,0.08); padding: 10px; display: flex; gap: 8px; background: #FBF8F0; }
+  textarea { flex: 1; resize: none; border-radius: 8px; border: 1px solid rgba(27,42,74,0.15); padding: 10px; font-size: 14px; }
+  .sendbtn { width: 42px; height: 42px; border-radius: 8px; background: #2F7A5C; color: white; border: none; font-size: 18px; cursor: pointer; }
+  .sendbtn:disabled { opacity: 0.4; }
+  .attachbtn { width: 42px; height: 42px; border-radius: 8px; background: #FBF8F0; color: #1B2A4A; border: 1px solid rgba(27,42,74,0.15); font-size: 18px; cursor: pointer; }
+  .thumb-wrap { position: relative; display: inline-block; margin: 0 0 8px 0; }
+  .thumb-wrap img { max-width: 120px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.15); display: block; }
+  .thumb-remove { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #D64550; color: white; border: none; font-size: 12px; cursor: pointer; }
+  .bubble img { max-width: 100%; border-radius: 8px; margin-top: 6px; display: block; }
+  .plans { display: flex; flex-direction: column; gap: 12px; }
+  .plancard { border: 1px solid rgba(27,42,74,0.12); border-radius: 10px; padding: 14px; background: #fff; }
+  .plancard.highlight { border: 2px solid #2F7A5C; background: rgba(47,122,92,0.05); }
+  .plancard h3 { margin: 0 0 4px; color: #1B2A4A; font-size: 16px; }
+  .plancard .price { color: #2F7A5C; font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+  .plancard ul { margin: 0 0 10px; padding-left: 18px; color: rgba(27,42,74,0.75); font-size: 13px; }
+  .plancard li { margin-bottom: 3px; }
+  .plancard button { width: 100%; padding: 10px; border-radius: 8px; border: none; background: #1B2A4A; color: white; font-weight: 600; cursor: pointer; }
+  .paybox { background: rgba(244,211,94,0.2); border: 1px solid rgba(244,211,94,0.5); border-radius: 8px; padding: 12px; font-size: 13px; color: #1B2A4A; margin-top: 10px; }
+  .codeinput { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(27,42,74,0.15); margin-top: 8px; font-size: 14px; }
+  .limitnote { font-size: 12px; color: rgba(27,42,74,0.55); text-align: center; padding: 6px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useEffect } = React;
+
+const GRADES = ["9", "10", "11", "12"];
+const STREAMS = {
+  "11": ["Pre-Medical (FSc)", "Pre-Engineering (FSc)", "FA (Arts)", "ICS"],
+  "12": ["Pre-Medical (FSc)", "Pre-Engineering (FSc)", "FA (Arts)", "ICS"],
+};
+const SUBJECTS = {
+  "9": ["Physics", "Chemistry", "Biology", "Mathematics", "English", "Urdu", "Pakistan Studies", "Computer Science"],
+  "10": ["Physics", "Chemistry", "Biology", "Mathematics", "English", "Urdu", "Pakistan Studies", "Computer Science"],
+  "Pre-Medical (FSc)": ["Physics", "Chemistry", "Biology", "English"],
+  "Pre-Engineering (FSc)": ["Physics", "Chemistry", "Mathematics", "English"],
+  "ICS": ["Computer Science", "Mathematics", "Physics", "English"],
+  "FA (Arts)": ["Urdu", "English", "Islamiyat", "Pakistan Studies", "Economics", "Civics", "Psychology"],
+};
+
+const FREE_DAILY_LIMIT = 5;
+// MVP ke liye simple shared codes. Payment confirm hone ke baad aap khud yeh code
+// customer ko WhatsApp kar dein. Baad mein isay per-user unique codes se replace kiya ja sakta hai.
+const ACCESS_CODES = { PAID2026: "paid", BIZ2026: "business" };
+
+function getPlanState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("sb_plan") || "null");
+    return saved || { plan: "free", date: "", count: 0 };
+  } catch (e) { return { plan: "free", date: "", count: 0 }; }
+}
+function savePlanState(state) {
+  try { localStorage.setItem("sb_plan", JSON.stringify(state)); } catch (e) {}
+}
+
+function buildSystemPrompt(grade, stream, subject) {
+  const classLabel = stream ? `Grade ${grade} (${stream})` : `Grade ${grade}`;
+  return `Tum "Copy" ho — ek dosti wala Pakistani AI tutor jo ${classLabel} ke ${subject} ke student ki madad karta hai.
+Qawaid:
+- Hamesha Roman Urdu aur simple English mix mein samjhao.
+- Seedha final answer mat do — step-by-step samjhao.
+- Chotay paragraphs likho, mobile screen ke liye.
+- ${subject} ke Pakistani board syllabus ke hisab se jawab do.
+- Agar sawal subject se mutalliq na ho, pyar se wapis subject par le aao.`;
+}
+
+function App() {
+  const [step, setStep] = useState("plans");
+  const [grade, setGrade] = useState(null);
+  const [stream, setStream] = useState(null);
+  const [subject, setSubject] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+  const [image, setImage] = useState(null); // { base64, mediaType }
+  const [loading, setLoading] = useState(false);
+  const [planState, setPlanState] = useState(getPlanState());
+  const [codeInput, setCodeInput] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const scrollRef = useRef(null);
+  const fileRef = useRef(null);
+
+  const today = new Date().toDateString();
+  const questionsUsedToday = planState.date === today ? planState.count : 0;
+  const isPaid = planState.plan === "paid" || planState.plan === "business";
+  const freeRemaining = FREE_DAILY_LIMIT - questionsUsedToday;
+
+  function unlockWithCode() {
+    const code = codeInput.trim().toUpperCase();
+    if (ACCESS_CODES[code]) {
+      const next = { plan: ACCESS_CODES[code], date: today, count: 0 };
+      setPlanState(next); savePlanState(next); setCodeError("");
+      setStep("grade");
+    } else {
+      setCodeError("Yeh code sahi nahi hai. Payment confirm hone ke baad diya gaya code check karo.");
+    }
+  }
+  function continueFree() { setStep("grade"); }
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, loading]);
+
+  const needsStream = grade === "11" || grade === "12";
+  const subjectList = needsStream ? (SUBJECTS[stream] || []) : (SUBJECTS[grade] || []);
+
+  function selectGrade(g) {
+    setGrade(g); setStream(null); setSubject(null);
+    setStep(g === "11" || g === "12" ? "stream" : "subject");
+  }
+  function selectStream(s) { setStream(s); setSubject(null); setStep("subject"); }
+  function selectSubject(s) {
+    setSubject(s); setStep("chat");
+    setMessages([{ role: "assistant", content: `Assalam-o-Alaikum! 📘 Main Copy hoon, tumhara ${s} ka study buddy. Grade ${grade}${stream ? " (" + stream + ")" : ""} ka koi bhi sawal poochho.` }]);
+  }
+  function goBack() {
+    if (step === "chat") setStep("subject");
+    else if (step === "subject") setStep(needsStream ? "stream" : "grade");
+    else if (step === "stream") setStep("grade");
+  }
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!isPaid) { setCodeError(""); alert("Screenshot attach karna Paid/Business plan ka feature hai. Pehlay plan upgrade karo."); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result.split(",")[1];
+      setImage({ base64, mediaType: file.type });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function sendMessage() {
+    const text = input.trim();
+    if ((!text && !image) || loading) return;
+
+    if (!isPaid && questionsUsedToday >= FREE_DAILY_LIMIT) {
+      setMessages(prev => [...prev, { role: "assistant", content: `Aaj ke ${FREE_DAILY_LIMIT} free sawal khatam ho gaye. Kal phir try karo, ya Paid plan lo unlimited sawalon ke liye.` }]);
+      return;
+    }
+
+    let contentForDisplay = text;
+    let contentForApi = text;
+    if (image) {
+      contentForApi = [
+        { type: "image", source: { type: "base64", media_type: image.mediaType, data: image.base64 } },
+        { type: "text", text: text || "Is tasveer mein jo sawal/problem hai usay solve karo." },
+      ];
+    }
+
+    const newMessages = [...messages, { role: "user", content: contentForApi, _displayImage: image ? `data:${image.mediaType};base64,${image.base64}` : null, _displayText: contentForDisplay }];
+    setMessages(newMessages); setInput(""); setImage(null); setLoading(true);
+
+    if (!isPaid) {
+      const next = { plan: "free", date: today, count: questionsUsedToday + 1 };
+      setPlanState(next); savePlanState(next);
+    }
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system: buildSystemPrompt(grade, stream, subject),
+          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+        }),
+      });
+      const data = await response.json();
+      const textBlocks = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
+      setMessages(prev => [...prev, { role: "assistant", content: textBlocks || "Maaf karna, kuch masla ho gaya." }]);
+    } catch (e) {
+      setMessages(prev => [...prev, { role: "assistant", content: "Connection mein masla ho gaya." }]);
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <div className="shell">
+      {step === "plans" && (
+        <div className="card">
+          <div className="spiral">{Array.from({length:12}).map((_,i)=><div className="dot" key={i}></div>)}</div>
+          <div className="margin"></div>
+          <div className="content">
+            <h1>Plan Chuno</h1>
+            <div className="sub">Jitni zarurat, utna plan.</div>
+            <div className="plans">
+              <div className="plancard">
+                <h3>Free</h3>
+                <div className="price">Rs. 0</div>
+                <ul>
+                  <li>{FREE_DAILY_LIMIT} sawal roz</li>
+                  <li>Sirf text sawal</li>
+                  <li>Har subject / grade</li>
+                </ul>
+                <button onClick={continueFree}>Free Shuru Karo</button>
+              </div>
+              <div className="plancard highlight">
+                <h3>Paid</h3>
+                <div className="price">Rs. 300 / mahina</div>
+                <ul>
+                  <li>Unlimited sawal</li>
+                  <li>Screenshot / tasveer bhej kar poochho</li>
+                  <li>Priority jawab</li>
+                </ul>
+                <div className="paybox">
+                  EasyPaisa/JazzCash: <b>03XX-XXXXXXX</b> par Rs. 300 bhejo, screenshot WhatsApp <b>03XX-XXXXXXX</b> par bhejo — aapko unlock code milega.
+                </div>
+                <input className="codeinput" placeholder="Unlock code daalo" value={codeInput} onChange={e => setCodeInput(e.target.value)} />
+                {codeError && <div style={{color:"#D64550", fontSize:12, marginTop:6}}>{codeError}</div>}
+                <button style={{marginTop:8}} onClick={unlockWithCode}>Code Se Unlock Karo</button>
+              </div>
+              <div className="plancard">
+                <h3>Business</h3>
+                <div className="price">Custom pricing</div>
+                <ul>
+                  <li>Coaching center / school ke liye</li>
+                  <li>Apni branding, bulk students</li>
+                  <li>WhatsApp par contact karke setup</li>
+                </ul>
+                <button onClick={() => window.open('https://wa.me/92XXXXXXXXXX','_blank')}>WhatsApp Par Baat Karo</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {step === "grade" && (
+        <div className="card">
+          <div className="spiral">{Array.from({length:12}).map((_,i)=><div className="dot" key={i}></div>)}</div>
+          <div className="margin"></div>
+          <div className="content">
+            <h1>Apni Jamaat Chuno</h1>
+            <div className="sub">Roll number slip jaisa — ek tap.</div>
+            {GRADES.map((g,i) => (
+              <button className="option" key={g} onClick={() => selectGrade(g)}>
+                <span><span className="num">{i+1}.</span>Grade {g}</span><span>›</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {step === "stream" && (
+        <div className="card">
+          <div className="spiral">{Array.from({length:12}).map((_,i)=><div className="dot" key={i}></div>)}</div>
+          <div className="margin"></div>
+          <div className="content">
+            <button className="back" onClick={goBack}>‹ Peechay</button>
+            <h1>Group Chuno</h1>
+            <div className="sub">Grade {grade} mein tumhara group kya hai?</div>
+            {STREAMS[grade].map((s,i) => (
+              <button className="option" key={s} onClick={() => selectStream(s)}>
+                <span><span className="num">{i+1}.</span>{s}</span><span>›</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {step === "subject" && (
+        <div className="card">
+          <div className="spiral">{Array.from({length:12}).map((_,i)=><div className="dot" key={i}></div>)}</div>
+          <div className="margin"></div>
+          <div className="content">
+            <button className="back" onClick={goBack}>‹ Peechay</button>
+            <h1>Subject Chuno</h1>
+            <div className="sub">Grade {grade}{stream ? " · " + stream : ""} ke subjects</div>
+            {subjectList.map((s,i) => (
+              <button className="option" key={s} onClick={() => selectSubject(s)}>
+                <span><span className="num">{i+1}.</span>{s}</span><span>›</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {step === "chat" && (
+        <div className="card chatwrap">
+          <div className="chatheader">
+            <button className="back" style={{color:"#FBF8F0"}} onClick={goBack}>‹ Badlo</button>
+            <span>{subject} · Grade {grade}</span>
+            <span style={{fontSize:11, background:"rgba(244,211,94,0.9)", color:"#1B2A4A", padding:"2px 8px", borderRadius:10, fontWeight:700}}>
+              {isPaid ? planState.plan.toUpperCase() : "FREE"}
+            </span>
+          </div>
+          {!isPaid && (
+            <div className="limitnote">Aaj {Math.max(freeRemaining,0)} / {FREE_DAILY_LIMIT} free sawal baaki hain</div>
+          )}
+          <div className="chatbody" ref={scrollRef}>
+            {messages.map((m,i) => (
+              <div key={i} className={`bubble ${m.role === "user" ? "user" : "bot"}`}>
+                {m.role === "user" ? (m._displayText || (typeof m.content === "string" ? m.content : "")) : m.content}
+                {m._displayImage && <img src={m._displayImage} alt="attachment" />}
+              </div>
+            ))}
+            {loading && <div className="bubble bot">...</div>}
+          </div>
+          <div className="inputrow" style={{flexDirection:"column", alignItems:"stretch"}}>
+            {image && (
+              <div className="thumb-wrap">
+                <img src={`data:${image.mediaType};base64,${image.base64}`} alt="preview" />
+                <button className="thumb-remove" onClick={() => setImage(null)}>×</button>
+              </div>
+            )}
+            <div style={{display:"flex", gap:8}}>
+              <input type="file" accept="image/*" ref={fileRef} style={{display:"none"}} onChange={handleFileSelect} />
+              <button className="attachbtn" onClick={() => fileRef.current.click()} title="Screenshot attach karo">📎</button>
+              <textarea rows="1" value={input} placeholder="Apna sawal likho..."
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} />
+              <button className="sendbtn" onClick={sendMessage} disabled={loading || (!input.trim() && !image)}>➤</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
