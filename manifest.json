@@ -1,6 +1,6 @@
 {
-  "name": "Copy - AI Study Buddy",
-  "short_name": "Copy",
+  "name": "Study Buddy - AI Learning Assistant",
+  "short_name": "StudyBuddy",
   "description": "Roman Urdu AI study buddy for Pakistani students, Grade 9-12",
   "start_url": "/",
   "scope": "/",
