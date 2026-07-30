@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title> Apna AI Study Buddy</title>
+<title>Study Buddy — AI Learning Assistant</title>
 <link rel="manifest" href="/manifest.json" />
 <meta name="theme-color" content="#1B2A4A" />
 <link rel="apple-touch-icon" href="/icon-192.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Copy" />
+<meta name="apple-mobile-web-app-title" content="Study Buddy" />
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -92,7 +92,7 @@ function savePlanState(state) {
 
 function buildSystemPrompt(grade, stream, subject) {
   const classLabel = stream ? `Grade ${grade} (${stream})` : `Grade ${grade}`;
-  return `Tum "Copy" ho — ek dosti wala Pakistani AI tutor jo ${classLabel} ke ${subject} ke student ki madad karta hai.
+  return `Tum ek dosti wala Pakistani AI tutor ho jo ${classLabel} ke ${subject} ke student ki madad karta hai.
 Qawaid:
 - Hamesha Roman Urdu aur simple English mix mein samjhao.
 - Seedha final answer mat do — step-by-step samjhao.
@@ -147,7 +147,7 @@ function App() {
   function selectStream(s) { setStream(s); setSubject(null); setStep("subject"); }
   function selectSubject(s) {
     setSubject(s); setStep("chat");
-    setMessages([{ role: "assistant", content: `Assalam-o-Alaikum! 📘 Main Copy hoon, tumhara ${s} ka study buddy. Grade ${grade}${stream ? " (" + stream + ")" : ""} ka koi bhi sawal poochho.` }]);
+    setMessages([{ role: "assistant", content: `Assalam-o-Alaikum! 📘 Main tumhara ${s} ka study buddy hoon. Grade ${grade}${stream ? " (" + stream + ")" : ""} ka koi bhi sawal poochho.` }]);
   }
   function goBack() {
     if (step === "chat") setStep("subject");
@@ -158,7 +158,7 @@ function App() {
   function handleFileSelect(e) {
     const file = e.target.files[0];
     if (!file) return;
-    if (!isPaid) { setCodeError(""); alert("Screenshot attach karna Paid/Business plan ka feature hai. Pehlay plan upgrade karo."); return; }
+    if (!isPaid) { setCodeError(""); alert("Attaching a screenshot is a Paid/Business plan feature. Please upgrade your plan first."); return; }
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result.split(",")[1];
@@ -172,7 +172,7 @@ function App() {
     if ((!text && !image) || loading) return;
 
     if (!isPaid && questionsUsedToday >= FREE_DAILY_LIMIT) {
-      setMessages(prev => [...prev, { role: "assistant", content: `Aaj ke ${FREE_DAILY_LIMIT} free sawal khatam ho gaye. Kal phir try karo, ya Paid plan lo unlimited sawalon ke liye.` }]);
+      setMessages(prev => [...prev, { role: "assistant", content: `You've used all ${FREE_DAILY_LIMIT} free questions for today. Try again tomorrow, or get the Paid plan for unlimited questions.` }]);
       return;
     }
 
@@ -222,43 +222,43 @@ function App() {
           <div className="spiral">{Array.from({length:12}).map((_,i)=><div className="dot" key={i}></div>)}</div>
           <div className="margin"></div>
           <div className="content">
-            <h1>Plan Chuno</h1>
-            <div className="sub">Jitni zarurat, utna plan.</div>
+            <h1>Choose Your Plan</h1>
+            <div className="sub">Pick the plan that fits your needs.</div>
             <div className="plans">
               <div className="plancard">
                 <h3>Free</h3>
                 <div className="price">Rs. 0</div>
                 <ul>
-                  <li>{FREE_DAILY_LIMIT} sawal roz</li>
-                  <li>only text questions</li>
-                  <li>Har subject / grade</li>
+                  <li>{FREE_DAILY_LIMIT} questions per day</li>
+                  <li>Text questions only</li>
+                  <li>Every subject / grade</li>
                 </ul>
-                <button onClick={continueFree}>Free Shuru Karo</button>
+                <button onClick={continueFree}>Start Free</button>
               </div>
               <div className="plancard highlight">
                 <h3>Paid</h3>
-                <div className="price">Rs. 300 / mahina</div>
+                <div className="price">Rs. 300 / month</div>
                 <ul>
                   <li>Unlimited questions</li>
-                  <li>Screenshot / photo upload kar ky poochho</li>
-                  <li>Priority jawab</li>
+                  <li>Ask by sending a screenshot</li>
+                  <li>Priority answers</li>
                 </ul>
                 <div className="paybox">
-                  EasyPaisa/JazzCash: <b>0346-7353181</b> (Account: <b>kaif siddique</b>) par Rs. 300 bhejo, screenshot WhatsApp <b>0337-0123412</b> par bhejo — aapko unlock code milega.
+                  EasyPaisa/JazzCash: <b>0346-7353181</b> (Account Name: <b>KAIF SIDDIQUE</b>) — send Rs. 300, then WhatsApp the payment screenshot to <b>03370123412</b> to get your unlock code.
                 </div>
-                <input className="codeinput" placeholder="Unlock code daalo" value={codeInput} onChange={e => setCodeInput(e.target.value)} />
+                <input className="codeinput" placeholder="Enter unlock code" value={codeInput} onChange={e => setCodeInput(e.target.value)} />
                 {codeError && <div style={{color:"#D64550", fontSize:12, marginTop:6}}>{codeError}</div>}
-                <button style={{marginTop:8}} onClick={unlockWithCode}>Code Se Unlock Karo</button>
+                <button style={{marginTop:8}} onClick={unlockWithCode}>Unlock with Code</button>
               </div>
               <div className="plancard">
                 <h3>Business</h3>
                 <div className="price">Custom pricing</div>
                 <ul>
-                  <li>Coaching center / school ke liye</li>
-                  <li>Apni branding, bulk students</li>
-                  <li>WhatsApp par contact karke setup</li>
+                  <li>For coaching centers / schools</li>
+                  <li>Your own branding, bulk students</li>
+                  <li>Contact us on WhatsApp to set up</li>
                 </ul>
-                <button onClick={() => window.open('https://wa.me/923370123412','_blank')}>WhatsApp Par Baat Karo</button>
+                <button onClick={() => window.open('https://wa.me/923370123412','_blank')}>Chat on WhatsApp</button>
               </div>
             </div>
           </div>
@@ -269,8 +269,8 @@ function App() {
           <div className="spiral">{Array.from({length:12}).map((_,i)=><div className="dot" key={i}></div>)}</div>
           <div className="margin"></div>
           <div className="content">
-            <h1>Apni Jamaat Chuno</h1>
-            <div className="sub">Roll number slip jaisa — ek tap.</div>
+            <h1>Choose Your Grade</h1>
+            <div className="sub">One tap to get started.</div>
             {GRADES.map((g,i) => (
               <button className="option" key={g} onClick={() => selectGrade(g)}>
                 <span><span className="num">{i+1}.</span>Grade {g}</span><span>›</span>
@@ -284,9 +284,9 @@ function App() {
           <div className="spiral">{Array.from({length:12}).map((_,i)=><div className="dot" key={i}></div>)}</div>
           <div className="margin"></div>
           <div className="content">
-            <button className="back" onClick={goBack}>‹ Peechay</button>
-            <h1>Group Chuno</h1>
-            <div className="sub">Grade {grade} mein tumhara group kya hai?</div>
+            <button className="back" onClick={goBack}>‹ Back</button>
+            <h1>Choose Your Stream</h1>
+            <div className="sub">Which group are you in for Grade {grade}?</div>
             {STREAMS[grade].map((s,i) => (
               <button className="option" key={s} onClick={() => selectStream(s)}>
                 <span><span className="num">{i+1}.</span>{s}</span><span>›</span>
@@ -300,9 +300,9 @@ function App() {
           <div className="spiral">{Array.from({length:12}).map((_,i)=><div className="dot" key={i}></div>)}</div>
           <div className="margin"></div>
           <div className="content">
-            <button className="back" onClick={goBack}>‹ Peechay</button>
-            <h1>Subject Chuno</h1>
-            <div className="sub">Grade {grade}{stream ? " · " + stream : ""} ke subjects</div>
+            <button className="back" onClick={goBack}>‹ Back</button>
+            <h1>Choose Subject</h1>
+            <div className="sub">Subjects for Grade {grade}{stream ? " · " + stream : ""}</div>
             {subjectList.map((s,i) => (
               <button className="option" key={s} onClick={() => selectSubject(s)}>
                 <span><span className="num">{i+1}.</span>{s}</span><span>›</span>
@@ -314,14 +314,14 @@ function App() {
       {step === "chat" && (
         <div className="card chatwrap">
           <div className="chatheader">
-            <button className="back" style={{color:"#FBF8F0"}} onClick={goBack}>‹ Badlo</button>
+            <button className="back" style={{color:"#FBF8F0"}} onClick={goBack}>‹ Change</button>
             <span>{subject} · Grade {grade}</span>
             <span style={{fontSize:11, background:"rgba(244,211,94,0.9)", color:"#1B2A4A", padding:"2px 8px", borderRadius:10, fontWeight:700}}>
               {isPaid ? planState.plan.toUpperCase() : "FREE"}
             </span>
           </div>
           {!isPaid && (
-            <div className="limitnote">Aaj {Math.max(freeRemaining,0)} / {FREE_DAILY_LIMIT} free sawal baaki hain</div>
+            <div className="limitnote">{Math.max(freeRemaining,0)} / {FREE_DAILY_LIMIT} free questions left today</div>
           )}
           <div className="chatbody" ref={scrollRef}>
             {messages.map((m,i) => (
@@ -342,7 +342,7 @@ function App() {
             <div style={{display:"flex", gap:8}}>
               <input type="file" accept="image/*" ref={fileRef} style={{display:"none"}} onChange={handleFileSelect} />
               <button className="attachbtn" onClick={() => fileRef.current.click()} title="Screenshot attach karo">📎</button>
-              <textarea rows="1" value={input} placeholder="Apna sawal likho..."
+              <textarea rows="1" value={input} placeholder="Type your question..."
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} />
               <button className="sendbtn" onClick={sendMessage} disabled={loading || (!input.trim() && !image)}>➤</button>
