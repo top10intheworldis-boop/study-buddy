@@ -4,6 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Copy — Apna AI Study Buddy</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#1B2A4A" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Copy" />
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -238,7 +244,7 @@ function App() {
                   <li>Priority jawab</li>
                 </ul>
                 <div className="paybox">
-                  EasyPaisa/JazzCash: <b>0346-7353181</b> (Account: <b>kaif siddique</b>) par Rs. 300 bhejo, screenshot WhatsApp <b>0337-0123412</b> par bhejo — aapko unlock code milega.
+                  EasyPaisa/JazzCash: <b>0346-7353181</b> (Account: <b>ksif siddique</b>) par Rs. 300 bhejo, screenshot WhatsApp <b>0337-0123412</b> par bhejo — aapko unlock code milega.
                 </div>
                 <input className="codeinput" placeholder="Unlock code daalo" value={codeInput} onChange={e => setCodeInput(e.target.value)} />
                 {codeError && <div style={{color:"#D64550", fontSize:12, marginTop:6}}>{codeError}</div>}
@@ -349,6 +355,12 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
 </script>
 </body>
 </html>
