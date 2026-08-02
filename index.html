@@ -76,9 +76,6 @@ const SUBJECTS = {
 };
 
 const FREE_DAILY_LIMIT = 5;
-// MVP ke liye simple shared codes. Payment confirm hone ke baad aap khud yeh code
-// customer ko WhatsApp kar dein. Baad mein isay per-user unique codes se replace kiya ja sakta hai.
-const ACCESS_CODES = { PAID2026: "paid", BIZ2026: "business" };
 
 function getPlanState() {
   try {
@@ -121,14 +118,26 @@ function App() {
   const isPaid = planState.plan === "paid" || planState.plan === "business";
   const freeRemaining = FREE_DAILY_LIMIT - questionsUsedToday;
 
-  function unlockWithCode() {
-    const code = codeInput.trim().toUpperCase();
-    if (ACCESS_CODES[code]) {
-      const next = { plan: ACCESS_CODES[code], date: today, count: 0 };
-      setPlanState(next); savePlanState(next); setCodeError("");
-      setStep("grade");
-    } else {
-      setCodeError("Yeh code sahi nahi hai. Payment confirm hone ke baad diya gaya code check karo.");
+  async function unlockWithCode() {
+    const code = codeInput.trim();
+    if (!code) return;
+    setCodeError("Checking...");
+    try {
+      const response = await fetch("/api/redeem-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        const next = { plan: data.plan, date: today, count: 0 };
+        setPlanState(next); savePlanState(next); setCodeError("");
+        setStep("grade");
+      } else {
+        setCodeError(data.message || "Invalid code.");
+      }
+    } catch (e) {
+      setCodeError("Could not verify code. Check your connection and try again.");
     }
   }
   function continueFree() { setStep("grade"); }
