@@ -1,0 +1,42 @@
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ success: false, message: "Method not allowed" });
+  }
+
+  const { code } = req.body;
+  if (!code || !code.trim()) {
+    return res.status(400).json({ success: false, message: "No code provided." });
+  }
+
+  const baseUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const key = `code:${code.trim().toUpperCase()}`;
+
+  try {
+    // Read the current value of this code
+    const getResp = await fetch(`${baseUrl}/get/${encodeURIComponent(key)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const getData = await getResp.json();
+
+    if (!getData.result) {
+      return res.status(200).json({ success: false, message: "Invalid code. Please check and try again." });
+    }
+
+    // Stored format is "plan:unused" or "plan:used"
+    const [plan, status] = getData.result.split(":");
+
+    if (status === "used") {
+      return res.status(200).json({ success: false, message: "This code has already been used." });
+    }
+
+    // Mark the code as used so it can never be redeemed again
+    await fetch(`${baseUrl}/set/${encodeURIComponent(key)}/${encodeURIComponent(plan + ":used")}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res.status(200).json({ success: true, plan });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Server error, please try again." });
+  }
+}
