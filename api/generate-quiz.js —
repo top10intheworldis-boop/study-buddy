@@ -1,0 +1,68 @@
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ success: false, message: "Method not allowed" });
+  }
+
+  try {
+    const { grade, stream, subject, scopeType, scopeDetail, numQuestions, medium } = req.body;
+    const classLabel = stream ? `Grade ${grade} (${stream})` : `Grade ${grade}`;
+
+    let scopeInstruction = "";
+    if (scopeType === "chapter") {
+      scopeInstruction = `Base all questions only on this chapter/topic: "${scopeDetail}".`;
+    } else if (scopeType === "multi-chapter") {
+      scopeInstruction = `Mix questions from these chapters/topics: "${scopeDetail}".`;
+    } else if (scopeType === "full-book") {
+      scopeInstruction = `Cover the entire ${subject} book (${classLabel} syllabus), spanning different chapters.`;
+    } else if (scopeType === "mixed") {
+      scopeInstruction = `Mix questions from the ${subject} syllabus across these grades: ${scopeDetail}.`;
+    }
+
+    const languageRule = medium === "urdu"
+      ? "Write all questions and options in Roman Urdu (Urdu written in English letters), matching Pakistani board exam standards."
+      : "Write all questions and options in clear English, matching Pakistani board exam standards.";
+
+    const system = `You are a Pakistani board exam quiz generator. Create an MCQ quiz for ${classLabel} ${subject}.
+${scopeInstruction}
+Generate exactly ${numQuestions} multiple-choice questions.
+Return ONLY a valid JSON array, no other text, no markdown, no code fences. Exact format:
+[{"question":"...", "options":["...","...","...","..."], "correct":0}]
+"correct" is the zero-based index of the right option (0, 1, 2, or 3).
+${languageRule}`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-5",
+        max_tokens: 2000,
+        system: system,
+        messages: [{ role: "user", content: "Generate the quiz now." }],
+      }),
+    });
+
+    const data = await response.json();
+    const textBlock = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n");
+
+    if (!textBlock) {
+      return res.status(200).json({ success: false, message: "Could not generate quiz. Try again." });
+    }
+
+    // Strip any accidental markdown fences before parsing
+    const cleaned = textBlock.replace(/```json|```/g, "").trim();
+    let questions;
+    try {
+      questions = JSON.parse(cleaned);
+    } catch (e) {
+      return res.status(200).json({ success: false, message: "Quiz format error. Please try again." });
+    }
+
+    return res.status(200).json({ success: true, questions });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Server error, please try again." });
+  }
+}
