@@ -126,15 +126,18 @@ function savePhone(phone) {
   try { localStorage.setItem("sb_phone", phone); } catch (e) {}
 }
 
-function buildSystemPrompt(grade, stream, subject) {
+function buildSystemPrompt(grade, stream, subject, medium) {
   const classLabel = stream ? `Grade ${grade} (${stream})` : `Grade ${grade}`;
-  return `Tum ek dosti wala Pakistani AI tutor ho jo ${classLabel} ke ${subject} ke student ki madad karta hai.
-Qawaid:
-- Hamesha Roman Urdu aur simple English mix mein samjhao.
-- Seedha final answer mat do — step-by-step samjhao.
-- Chotay paragraphs likho, mobile screen ke liye.
-- ${subject} ke Pakistani board syllabus ke hisab se jawab do.
-- Agar sawal subject se mutalliq na ho, pyar se wapis subject par le aao.`;
+  const languageRule = medium === "urdu"
+    ? "- Always respond in Roman Urdu (Urdu written in English letters), simple and easy to read."
+    : "- Always respond in clear, simple English.";
+  return `You are a friendly Pakistani AI tutor helping a ${classLabel} student with ${subject}.
+Rules:
+${languageRule}
+- Don't just give the final answer — explain step by step.
+- Keep paragraphs short, this is read on a mobile screen.
+- Base answers on the Pakistani board syllabus for ${subject}.
+- If the question isn't related to the subject, gently steer the conversation back.`;
 }
 
 function App() {
@@ -144,6 +147,7 @@ function App() {
   const [loginError, setLoginError] = useState("");
   const [checkingLogin, setCheckingLogin] = useState(false);
   const [grade, setGrade] = useState(null);
+  const [medium, setMedium] = useState(null);
   const [stream, setStream] = useState(null);
   const [subject, setSubject] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -202,7 +206,7 @@ function App() {
   function logout() {
     try { localStorage.removeItem("sb_phone"); } catch (e) {}
     setPhone(""); setPhoneInput(""); setPlanState({ plan: "free", date: "", count: 0, coins: 0 });
-    setGrade(null); setStream(null); setSubject(null); setMessages([]);
+    setGrade(null); setStream(null); setSubject(null); setMedium(null); setMessages([]);
     setStep("login");
   }
 
@@ -228,7 +232,10 @@ function App() {
 
   function startChat() {
     setStep("chat");
-    setMessages([{ role: "assistant", content: `Assalam-o-Alaikum! Main tumhara ${subject} ka study buddy hoon. Grade ${grade}${stream ? " (" + stream + ")" : ""} ka koi bhi sawal poochho.` }]);
+    const greeting = medium === "urdu"
+      ? `Assalam-o-Alaikum! Main tumhara ${subject} ka study buddy hoon. Grade ${grade}${stream ? " (" + stream + ")" : ""} ka koi bhi sawal poochho.`
+      : `Hi! I'm your ${subject} study buddy. Ask me anything about Grade ${grade}${stream ? " (" + stream + ")" : ""} — I'm here to help.`;
+    setMessages([{ role: "assistant", content: greeting }]);
   }
 
   function goBack() {
@@ -236,6 +243,7 @@ function App() {
     else if (step === "mode") setStep("subject");
     else if (step === "subject") setStep(needsStream ? "stream" : "grade");
     else if (step === "stream") setStep("grade");
+    else if (step === "grade") setStep("medium");
     else if (step === "quiz-play" || step === "quiz-result") setStep("quiz-setup");
   }
 
@@ -251,11 +259,12 @@ function App() {
       const data = await response.json();
       if (data.success) {
         setPlanState(prev => ({ ...prev, plan: data.plan, date: today, count: 0 }));
-        setCodeError(""); setStep("grade");
+        setCodeError(""); setStep("medium");
       } else { setCodeError(data.message || "Invalid code."); }
     } catch (e) { setCodeError("Could not verify code. Check your connection and try again."); }
   }
-  function continueFree() { setStep("grade"); }
+  function continueFree() { setStep("medium"); }
+  function selectMedium(m) { setMedium(m); setStep("grade"); }
 
   function handleFileSelect(e) {
     const file = e.target.files[0];
@@ -277,7 +286,7 @@ function App() {
     if (image) {
       contentForApi = [
         { type: "image", source: { type: "base64", media_type: image.mediaType, data: image.base64 } },
-        { type: "text", text: text || "Is tasveer mein jo sawal/problem hai usay solve karo." },
+        { type: "text", text: text || "Please solve the question/problem shown in this image." },
       ];
     }
     const newMessages = [...messages, { role: "user", content: contentForApi, _displayImage: image ? `data:${image.mediaType};base64,${image.base64}` : null, _displayText: text }];
@@ -291,7 +300,7 @@ function App() {
     try {
       const response = await fetch("/api/chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ system: buildSystemPrompt(grade, stream, subject), messages: newMessages.map(m => ({ role: m.role, content: m.content })) }),
+        body: JSON.stringify({ system: buildSystemPrompt(grade, stream, subject, medium), messages: newMessages.map(m => ({ role: m.role, content: m.content })) }),
       });
       const data = await response.json();
       const textBlocks = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n");
@@ -308,14 +317,4 @@ function App() {
 
   async function generateQuiz() {
     setQuizError(""); setQuizLoading(true);
-    let detail = scopeDetail;
-    if (scopeType === "mixed") detail = mixedGrades.map(g => `Grade ${g}`).join(", ") || "all grades";
-    if (scopeType === "full-book") detail = "";
-    if ((scopeType === "chapter" || scopeType === "multi-chapter") && !scopeDetail.trim()) {
-      setQuizError("Please enter chapter name(s)."); setQuizLoading(false); return;
-    }
-    if (scopeType === "mixed" && mixedGrades.length === 0) {
-      setQuizError("Please select at least one grade."); setQuizLoading(false); return;
-    }
-    try {
-      const response = await fetch("/api/generat
+    let detail = scopeDetai
